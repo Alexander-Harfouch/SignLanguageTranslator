@@ -1,6 +1,7 @@
 import mediapipe as mdp
 import cv2
 import numpy
+import Queries as qr
 
 
 def callCaptureLoop():
@@ -17,6 +18,39 @@ def callCaptureLoop():
         cv2.imshow("Sign Language Translator", currentFrame)  # show video being rendered
         if cv2.waitKey(1) & 0xFF == ord(' '):  # exit loop if space is pressed
             break
+    videoCapture.release()  # close camera
+    cv2.destroyAllWindows()  # close window pop up
+
+
+def insertAction(Action_Name):
+    qr.prepareAction(Action_Name)
+    videoCapture = cv2.VideoCapture(0)  # launch camera, parameter might change between different machines
+    pipeModel = mdp.solutions.holistic  # create UNPROCESSED virtual model
+    pipeModelHolistic = pipeModel.Holistic(min_detection_confidence=0.5,
+                                           min_tracking_confidence=0.5)  # create detector and tracker
+    modelDrawing = mdp.solutions.drawing_utils  # get model drawing tools
+    Videos_ID = qr.getVideosID(Action_Name)
+    for video in range(30):
+        for frame in range(30):
+            dummy, currentFrame = videoCapture.read()  # get current frame
+            processedFrame, currentFrame = processCurrentFrame(currentFrame, pipeModelHolistic)  # get processed frame
+            createLandmarkArrays(processedFrame)
+            drawKeyPoints(currentFrame, processedFrame, pipeModel, modelDrawing)  # draw virtual model
+
+            if frame == 0:
+                cv2.putText(currentFrame, "GET READY", (150, 300), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
+                cv2.imshow("Sign Language Translator", currentFrame)
+                cv2.waitKey(1000)
+            else:
+                cv2.putText(currentFrame, f"Frame: {frame} Video: {video} Action: {Action_Name}",
+                            (20, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
+                cv2.imshow("Sign Language Translator", currentFrame)
+
+            landmarks = createLandmarkArrays(processedFrame)
+            qr.insertFrame(landmarks, Videos_ID[video])  # add frame to database
+            cv2.imshow("Sign Language Translator", currentFrame)  # show video being rendered
+            if cv2.waitKey(1) & 0xFF == ord(' '):  # exit loop if space is pressed
+                break
     videoCapture.release()  # close camera
     cv2.destroyAllWindows()  # close window pop up
 
@@ -48,26 +82,26 @@ def createLandmarkArrays(processedFrame):
     leftHandLandmarks = []
     poseLandmarks = []
 
-    for landmarks in processedFrame.right_hand_landmarks.landmark:  # loop over all right-hand landmarks
-        if processedFrame.right_hand_landmarks:  # if landmark exists
-            rightHandLandmarks.append(numpy.array([landmarks.x, landmarks.y, landmarks.z]).flatten())  # add landmark
-        else:
-            rightHandLandmarks.append(numpy.zeros(63))  # add array of zeros as replacement for landmark
+    if processedFrame.right_hand_landmarks:  # if landmark exists
+        for landmarks in processedFrame.right_hand_landmarks.landmark:  # loop over all right-hand landmarks
+            rightHandLandmarks.extend(numpy.array([landmarks.x, landmarks.y, landmarks.z]).flatten())  # add landmark
+    else:
+        rightHandLandmarks.extend(numpy.zeros(63))  # add array of zeros as replacement for landmark
 
-    for landmarks in processedFrame.left_hand_landmarks.landmark:
-        if processedFrame.left_hand_landmarks:
-            leftHandLandmarks.append(numpy.array([landmarks.x, landmarks.y, landmarks.z]).flatten())
-        else:
-            leftHandLandmarks.append(numpy.zeros(63))
+    if processedFrame.left_hand_landmarks:
+        for landmarks in processedFrame.left_hand_landmarks.landmark:
+            leftHandLandmarks.extend(numpy.array([landmarks.x, landmarks.y, landmarks.z]).flatten())
+    else:
+        leftHandLandmarks.extend(numpy.zeros(63))
 
-    for landmarks in processedFrame.pose_landmarks.landmark:
-        if processedFrame.pose_landmarks:
-            poseLandmarks.append(numpy.array([landmarks.x, landmarks.y, landmarks.z, landmarks.visibility]).flatten())
-        else:
-            poseLandmarks.append(numpy.zeros(132))
+    if processedFrame.pose_landmarks:
+        for landmarks in processedFrame.pose_landmarks.landmark:
+            poseLandmarks.extend(numpy.array([landmarks.x, landmarks.y, landmarks.z, landmarks.visibility]).flatten())
+    else:
+        poseLandmarks.extend(numpy.zeros(132))
 
     #  concatenate all arrays into 1 array and return
-    return numpy.concatenate([rightHandLandmarks, leftHandLandmarks, poseLandmarks])
+    return numpy.concatenate([rightHandLandmarks, leftHandLandmarks, poseLandmarks]).tolist()
 
 
-callCaptureLoop()
+insertAction("Thanks")
