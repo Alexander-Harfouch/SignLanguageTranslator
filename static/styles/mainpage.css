@@ -1,4 +1,33 @@
-.btn{
-color: red;
-font-weight: bold
+@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@100;300;400;500;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Hurricane&family=Roboto:wght@100;300;400;500;700&display=swap");
+body.container {
+  background-color: darkslategrey;
+}
+h1 {
+  color: greenyellow;
+  font-family: "Hurricane";
+  font-weight: 700;
+  font-size: x-large;
+  text-align: center;
+}
+footer {
+  color: aqua;
+  margin-top: 25%;
+  text-align: center;
+}
+div {
+  text-align: center;
+  margin-top: 5%;
+  color: greenyellow;
+}
+
+#button-addAction {
+  color: greenyellow;
+}
+
+#button-DeleteAction {
+  color: greenyellow;
+}
+#viewActionsBtn {
+  color: greenyellow;
 }

@@ -5,14 +5,10 @@ from tensorflow.python.keras.utils.np_utils import to_categorical
 from tensorflow.python.keras.models import Sequential
 from tensorflow.python.keras.callbacks import TensorBoard
 import Queries as qr
-import main
-
-
-global seqModel
 
 
 def getNetworkLogs():
-    logs = TensorBoard(log_dir="/Logs")
+    logs = TensorBoard(log_dir="Logs")
     return logs
 
 
@@ -42,7 +38,6 @@ def getTestPortion():
 
 
 def createNeuralNetwork():
-    global seqModel
     seqModel = Sequential()
     actions = qr.getAllActions()
     seqModel.add(LSTM(units=64, return_sequences=True, input_shape=(30, 258), activation="relu"))
@@ -54,8 +49,5 @@ def createNeuralNetwork():
     seqModel.add(Dense(len(actions), activation="softmax"))  # last layer units represents the shape of the output we need
     seqModel.compile(optimizer="Adam", loss="categorical_crossentropy", metrics=["categorical_accuracy"])  # remove metrics
     trainX, testX, trainY, testY = getTestPortion()
-    seqModel.fit(trainX, trainY, epochs=2000, callbacks=[getNetworkLogs()])
+    seqModel.fit(trainX, trainY, epochs=1000, callbacks=[getNetworkLogs()])
     seqModel.save("actionWeights.h5")
-
-
-createNeuralNetwork()

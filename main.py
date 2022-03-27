@@ -2,14 +2,13 @@ import mediapipe as mdp
 import cv2
 import numpy
 import Queries as qr
-from LSTMDENSENeuralNetwork import neural
+import tensorflow as tf
 
-
-global testNeuralShape
 
 def interpretActions():
     frames = []
     sentence = []
+    seqModel = tf.keras.models.load_model('actionWeights.h5')
     actions = qr.getAllActions()
     videoCapture = cv2.VideoCapture(0)  # launch camera, parameter might change between different machines
     pipeModel = mdp.solutions.holistic  # create UNPROCESSED virtual model
@@ -21,21 +20,23 @@ def interpretActions():
         processedFrame, currentFrame = processCurrentFrame(currentFrame, pipeModelHolistic)  # get processed frame
         frames.insert(0, createLandmarkArrays(processedFrame))
         # drawKeyPoints(currentFrame, processedFrame, pipeModel, modelDrawing)  # draw virtual model
-        frames = frames[:-30]
-        prediction = []
-        if len(frames) == 30:
-            prediction = neural.seqModel.predict(numpy.expand_dims(frames, axis=0))
+        frames = frames[:30]
+        prediction = [0]
+        if len(frames) == 30:  # if we have 30 frames
+            prediction = seqModel.predict(numpy.expand_dims(frames, axis=0))[0].tolist()  # make prediction
 
-        if prediction.index(max(prediction)) > 0.4 and len(sentence) > 0:
-            if actions[prediction.index(max(prediction))] != sentence[-1]:
+        if prediction.index(max(prediction)) > 0.85 and len(sentence) > 0:  # if prediction is valid
+            if actions[prediction.index(max(prediction))] != sentence[-1]:  # if prediction is different from prev
                 sentence.append(actions[prediction.index(max(prediction))])
         else:
             sentence.append(actions[prediction.index(max(prediction))])
 
         if len(sentence) > 5:
-            sentence = sentence[:-5]
+            sentence = sentence[-5:]
 
-        cv2.putText(currentFrame, " " + sentence, (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
+        cv2.rectangle(currentFrame, (0, 0), (640, 60), (10, 10, 10), -1)
+        cv2.putText(currentFrame, " ".join(str(word).replace("(", "").replace(")", "").replace(",", "").replace("'", "") for word in sentence)
+                    , (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
         cv2.imshow("Sign Language Translator", currentFrame)  # show video being rendered
         if cv2.waitKey(1) & 0xFF == ord(' '):  # exit loop if space is pressed
             break
@@ -62,13 +63,13 @@ def callCaptureLoop():
 
 
 def insertAction(Action_Name):
-    # qr.prepareAction(Action_Name)
+    qr.prepareAction(Action_Name)
     videoCapture = cv2.VideoCapture(0)  # launch camera, parameter might change between different machines
     pipeModel = mdp.solutions.holistic  # create UNPROCESSED virtual model
     pipeModelHolistic = pipeModel.Holistic(min_detection_confidence=0.5,
                                            min_tracking_confidence=0.5)  # create detector and tracker
     modelDrawing = mdp.solutions.drawing_utils  # get model drawing tools
-    # Videos_ID = qr.getVideosID(Action_Name)
+    Videos_ID = qr.getVideosID(Action_Name)
     for video in range(30):
         for frame in range(30):
             dummy, currentFrame = videoCapture.read()  # get current frame
@@ -86,8 +87,7 @@ def insertAction(Action_Name):
                 cv2.imshow("Sign Language Translator", currentFrame)
 
             landmarks = createLandmarkArrays(processedFrame)
-            # testNeuralShape.append(landmarks)
-            # qr.insertFrame(landmarks, Videos_ID[video])  # add frame to database
+            qr.insertFrame(landmarks, Videos_ID[video])  # add frame to database
             cv2.imshow("Sign Language Translator", currentFrame)  # show video being rendered
             if cv2.waitKey(1) & 0xFF == ord(' '):  # exit loop if space is pressed
                 break
@@ -143,3 +143,5 @@ def createLandmarkArrays(processedFrame):
     #  concatenate all arrays into 1 array and return
     return numpy.concatenate([rightHandLandmarks, leftHandLandmarks, poseLandmarks]).tolist()
 
+
+interpretActions()

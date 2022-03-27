@@ -14,7 +14,7 @@ def connect():
 def prepareAction(name):
     con = connect()
     cursor = con.cursor()
-    cursor.execute('truncate table "SActions", "SVideos", "SFrames" RESTART IDENTITY')
+    # cursor.execute('truncate table "SActions", "SVideos", "SFrames" RESTART IDENTITY')
     cursor.execute('INSERT INTO "SActions" ("Action_Name") values (%s)', (name,))
     cursor.execute('SELECT "Action_ID" FROM "SActions" WHERE "Action_Name" = %s', (name,))
     actionID = cursor.fetchone()
