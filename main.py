@@ -7,7 +7,7 @@ import tensorflow as tf
 
 def interpretActions():
     frames = []
-    sentence = []
+    word = ""
     seqModel = tf.keras.models.load_model('actionWeights.h5')
     actions = qr.getAllActions()
     videoCapture = cv2.VideoCapture(0)  # launch camera, parameter might change between different machines
@@ -25,17 +25,14 @@ def interpretActions():
         if len(frames) == 30:  # if we have 30 frames
             prediction = seqModel.predict(numpy.expand_dims(frames, axis=0))[0].tolist()  # make prediction
 
-        if prediction.index(max(prediction)) > 0.85 and len(sentence) > 0:  # if prediction is valid
-            if actions[prediction.index(max(prediction))] != sentence[-1]:  # if prediction is different from prev
-                sentence.append(actions[prediction.index(max(prediction))])
+        if prediction.index(max(prediction)) > 0.8:  # if prediction is valid
+            if actions[prediction.index(max(prediction))] != word:  # if prediction is different from prev
+                word = actions[prediction.index(max(prediction))]
         else:
-            sentence.append(actions[prediction.index(max(prediction))])
-
-        if len(sentence) > 5:
-            sentence = sentence[-5:]
+            word = actions[prediction.index(max(prediction))]
 
         cv2.rectangle(currentFrame, (0, 0), (640, 60), (10, 10, 10), -1)
-        cv2.putText(currentFrame, " ".join(str(word).replace("(", "").replace(")", "").replace(",", "").replace("'", "") for word in sentence)
+        cv2.putText(currentFrame, " ".join(str(word).replace("(", "").replace(")", "").replace(",", "").replace("'", ""))
                     , (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
         cv2.imshow("Sign Language Translator", currentFrame)  # show video being rendered
         if cv2.waitKey(1) & 0xFF == ord(' '):  # exit loop if space is pressed
