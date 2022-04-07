@@ -8,7 +8,7 @@ import tensorflow as tf
 def interpretActions():
     frames = []
     word = ""
-    seqModel = tf.keras.models.load_model('actionWeights.h5')
+    seqModel = tf.keras.models.load_model('LSTMDENSENeuralNetwork/actionWeights.h5')
     actions = qr.getAllActions()
     videoCapture = cv2.VideoCapture(0)  # launch camera, parameter might change between different machines
     pipeModel = mdp.solutions.holistic  # create UNPROCESSED virtual model
@@ -19,13 +19,13 @@ def interpretActions():
         dummy, currentFrame = videoCapture.read()  # get current frame
         processedFrame, currentFrame = processCurrentFrame(currentFrame, pipeModelHolistic)  # get processed frame
         frames.insert(0, createLandmarkArrays(processedFrame))
-        # drawKeyPoints(currentFrame, processedFrame, pipeModel, modelDrawing)  # draw virtual model
+        drawKeyPoints(currentFrame, processedFrame, pipeModel, modelDrawing)  # draw virtual model
         frames = frames[:30]
         prediction = [0]
         if len(frames) == 30:  # if we have 30 frames
             prediction = seqModel.predict(numpy.expand_dims(frames, axis=0))[0].tolist()  # make prediction
 
-        if prediction.index(max(prediction)) > 0.8:  # if prediction is valid
+        if prediction.index(max(prediction)) > 0.95:  # if prediction is valid
             if actions[prediction.index(max(prediction))] != word:  # if prediction is different from prev
                 word = actions[prediction.index(max(prediction))]
         else:
@@ -139,6 +139,3 @@ def createLandmarkArrays(processedFrame):
 
     #  concatenate all arrays into 1 array and return
     return numpy.concatenate([rightHandLandmarks, leftHandLandmarks, poseLandmarks]).tolist()
-
-
-interpretActions()
