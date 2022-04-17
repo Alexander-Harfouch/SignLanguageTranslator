@@ -28,9 +28,22 @@
       />
     </div>
     <div>
-      {% for item in data %}
-        <p> {{ item }} </p>
-      {% endfor %}
+      <table class="table table-hover">
+        <thead class="thead-dark">
+          <tr>
+            <th scope="col">#</th>
+            <th scope="col">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in data %}
+          <tr>
+            <td>{{loop.index}}</td>
+            <td>{{ item }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
   <div>
     <form action="returnMain" method="post">
