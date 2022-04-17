@@ -5,6 +5,7 @@ import Queries as qr
 app = Flask(__name__)
 app.secret_key = "testestest"
 
+
 @app.route("/")
 def start_app():
     return render_template("index.html")
@@ -31,7 +32,14 @@ def deleteAction():
 @app.route("/viewActions", methods=['POST'])
 def viewActions():
     actions = qr.getAllActions()
-    flash("test test test")
+    formatActions = []
+    for s in actions:
+        formatActions.append(str(s).replace("(", "").replace(")", "").replace("'", "").replace(",", ""))
+    return render_template("actionsPage.html", data=formatActions)
+
+
+@app.route("/returnMain", methods=['POST'])
+def returnMain():
     return render_template("index.html")
 
 
