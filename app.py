@@ -19,13 +19,15 @@ def interpretActions():
 
 @app.route("/addAction", methods=['POST'])
 def addAction():
-    main.insertAction()
+    print(str(request.form['addActionBtn']))
+    ## main.insertAction()
     return render_template("index.html")
 
 
 @app.route("/deleteAction", methods=['POST'])
 def deleteAction():
-    qr.deleteAction()
+    print(str(request.form['deleteActionBtn']))
+    ##qr.deleteAction()
     return render_template("index.html")
 
 
